@@ -2,6 +2,10 @@
   <div class="mt-5 md:col-span-2 md:mt-0">
     <div class="space-y-6 bg-white px-4 py-5 sm:p-6">
 
+      <div class="px-6 py-4 pb-2">
+        <div id="player_container"></div>
+      </div>
+
       <!--      <div class="grid grid-cols-3 gap-6">-->
       <!--        <div class="col-span-3 sm:col-span-2">-->
       <!--          <label for="playerUrl" class="block text-sm font-medium text-gray-700">BC Player Loader</label>-->
@@ -53,7 +57,7 @@
 
       <div class="grid grid-cols-3 gap-6">
         <div class="col-span-3 sm:col-span-2">
-          <label for="setting" class="block text-sm font-medium text-gray-700">Video Id</label>
+          <label for="setting" class="block text-sm font-medium text-gray-700">setting</label>
           <div class="mt-1 flex rounded-md shadow-sm">
             <textarea name="setting" v-model="setting"
                       placeholder='player loader config'
@@ -138,33 +142,16 @@ export default {
   methods: {
     play() {
       try {
-        // console.log(this.setting);
         const config = JSON.parse(this.setting)
-        // const { vdoId, playlistId, ep, time } = this.setting;
-
         this.buildPlayer(config, parseInt(this.playIdx), parseInt(this.playTime))
       } catch (e) {
         console.log(window);
         console.error(e)
       }
-      // loadScript(this.playerUrl).then(() => {
-      //   try {
-      //     console.log(this.setting);
-      //     const config = JSON.parse(this.setting)
-      //     // const { vdoId, playlistId, ep, time } = this.setting;
-      //
-      //     this.buildPlayer(config)
-      //   } catch (e) {
-      //     console.log(window);
-      //     console.error(e)
-      //   }
-      // })
     },
     buildPlayer(config, playIdx, playTime) {
       const player_container = document.getElementById('player_container');
-      // const brightcovePlayerLoader = window['brightcovePlayerLoader'];
-
-      // const {vdoId, playlistId, ep, time} = config;
+      player_container.innerHTML = ''
 
       const params = {
         ...config,
@@ -175,8 +162,7 @@ export default {
       console.log(playIdx);
       console.log(playTime);
 
-      player_container.innerHTML = ''
-
+      brightcovePlayerLoader.reset();
       brightcovePlayerLoader(params).then(function (success) {
         const player = success.ref;
         console.log(`player: `, player);
