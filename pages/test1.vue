@@ -84,8 +84,8 @@ export default {
   data() {
     return {
       setting: `{
-   "accountId": "${this.$config.public.accountId || ''}",
-   "playerId": "${this.$config.public.playerId || 'Z4sz5QN9Y'}",
+  "accountId": "${this.$config.public.accountId || ''}",
+  "playerId": "${this.$config.public.playerId || 'Z4sz5QN9Y'}",
   "playlistId": "1757635339688542008"
 }`,
       playIdx: 1,
@@ -167,17 +167,19 @@ export default {
           console.log(`playIdx, Time`, this.playIdx, this.playTime);
 
 
-          myPlayer?.catalog.getPlaylist(cfg.playlistId, (error, playlist) => {
+          myPlayer.catalog.getPlaylist(cfg.playlistId, (error, playlist) => {
             if (error) {
               console.error(error);
             } else {
               console.log(playlist);
+
               if (this.playIdx > 0) {
+                // play specific ep
                 const videoId = playlist[this.playIdx].id
                 myPlayer.catalog.autoFindAndLoadMedia({
                   playlistId: cfg.playlistId,
                   playlistVideoId: videoId,
-                  startTime: this.playTime || 0,
+                  // startTime: this.playTime || 0,
                 })
               } else {
                 myPlayer.catalog.load(playlist);
