@@ -74,13 +74,13 @@
 import {loadScript} from "vue-plugin-load-script";
 
 export default {
-  mounted() {
-    console.log(`mounted`, this.$config.public.accountId);
-    const playerUrl = `https://players.brightcove.net/${this.$config.public.accountId}/${this.$config.public.playerId}_default/index.min.js`
-    loadScript(playerUrl).then(() => {
-      console.log(`load player script ok`);
-    }).catch(console.error);
-  },
+  // mounted() {
+  //   console.log(`mounted`, this.$config.public.accountId);
+  //   const playerUrl = `https://players.brightcove.net/${this.$config.public.accountId}/${this.$config.public.playerId}_default/index.min.js`
+  //   loadScript(playerUrl).then(() => {
+  //     console.log(`load player script ok`);
+  //   }).catch(console.error);
+  // },
   data() {
     return {
       setting: `{
@@ -108,15 +108,15 @@ export default {
   },
   methods: {
     play() {
-      this.setupPlayer()
+      // this.setupPlayer()
 
-      // const cfg = JSON.parse(this.setting);
-      // const playerUrl = `https://players.brightcove.net/${cfg.accountId}/${cfg.playerId}_default/index.min.js`
-      // loadScript(playerUrl)
-      //     .then(() => {
-      //       return this.setupPlayer();
-      //     })
-      //     .catch(console.error);
+      const cfg = JSON.parse(this.setting);
+      const playerUrl = `https://players.brightcove.net/${cfg.accountId}/${cfg.playerId}_default/index.min.js`
+      loadScript(playerUrl)
+          .then(() => {
+            return this.setupPlayer();
+          })
+          .catch(console.error);
     },
     setupPlayer() {
       try {
