@@ -4,4 +4,10 @@ export default {
   },
   modules: ['@nuxtjs/tailwindcss'],
   pages: true,
+  runtimeConfig: {
+    public: {
+      accountId: process.env.ACCOUNT_ID,
+      playerId: process.env.PLAYER_ID,
+    }
+  }
 };

@@ -2,18 +2,12 @@
   <div class="mt-5 md:col-span-2 md:mt-0">
     Vue Dynamic Component
     <div class="space-y-6 bg-white px-4 py-5 sm:p-6">
-      <!--      <div style="max-width: 960px;"-->
-      <!--           class="vjs-playlist-player-container">-->
-      <!--        <style>-->
-      <!--          video-js.video-js.vjs-fluid:not(.vjs-audio-only-mode) {-->
-      <!--            padding-top: 56.25%;-->
-      <!--          }-->
-      <!--        </style>-->
-      <component is="video-js"
-                 v-bind:class="'vjs-playlist-player-container'"
-                 v-bind:id="'myPlayer'"
-                 v-bind="playerConfig"></component>
-      <!--      </div>-->
+      <div class="vjs-playlist-player-container" style="max-width: 960px;">
+        <component is="video-js"
+                   v-bind:id="'myPlayer'"
+                   v-bind="playerConfig"/>
+      </div>
+
       <div class="grid grid-cols-3 gap-6">
         <div class="col-span-3 sm:col-span-2">
           <label for="setting" class="block text-sm font-medium text-gray-700">setting</label>
@@ -80,75 +74,120 @@
 import {loadScript} from "vue-plugin-load-script";
 
 export default {
+  mounted() {
+    console.log(`mounted`, this.$config.public.accountId);
+    const playerUrl = `https://players.brightcove.net/${this.$config.public.accountId}/${this.$config.public.playerId}_default/index.min.js`
+    loadScript(playerUrl).then(() => {
+      console.log(`load player script ok`);
+    }).catch(console.error);
+  },
   data() {
     return {
       setting: `{
-  "accountId": "",
-  "playerId": "Z4sz5QN9Y",
+   "accountId": "${this.$config.public.accountId || ''}",
+   "playerId": "${this.$config.public.playerId || 'Z4sz5QN9Y'}",
   "playlistId": "1757635339688542008"
 }`,
       playIdx: 1,
-      playTime: 10,
+      playTime: 15,
     }
   },
   computed: {
     playerConfig: function () {
-      const config = JSON.parse(this.setting);
+      const cfg = JSON.parse(this.setting);
       return {
-        "data-account": config.accountId,
-        "data-player": config.playerId,
+        "data-account": cfg.accountId,
+        "data-player": cfg.playerId,
         "data-embed": "default",
         "data-application-id": "",
+        "data-start-time": this.playTime,
         "controls": "",
         "class": "vjs-fluid"
-        // "data-playlist-id": config.playlistId,
       }
     }
   },
   methods: {
     play() {
-      const config = JSON.parse(this.setting);
-      const playIdx = parseInt(this.playIdx || 0);
-      const playTime = parseInt(this.playTime || 0);
+      this.setupPlayer()
 
-      const playerUrl = `https://players.brightcove.net/${config.accountId}/${config.playerId}_default/index.min.js`
-      loadScript(playerUrl).then(function () {
-        // set playlist id
-        // console.log(videojs);
-        videojs?.getPlayer('myPlayer')?.ready(function () {
-          let myPlayer = this;
-          console.log(`player ready`, config.playlistId);
-          console.log(`myPlayer`, myPlayer.catalog);
-          console.log(`playIdx, Time`, playIdx, playTime);
+      // const cfg = JSON.parse(this.setting);
+      // const playerUrl = `https://players.brightcove.net/${cfg.accountId}/${cfg.playerId}_default/index.min.js`
+      // loadScript(playerUrl)
+      //     .then(() => {
+      //       return this.setupPlayer();
+      //     })
+      //     .catch(console.error);
+    },
+    setupPlayer() {
+      try {
+        const cfg = JSON.parse(this.setting);
 
-          myPlayer.on('loadedmetadata', function () {
-            console.log(`loadedmetadata:`, myPlayer.playlist());
-            if (playIdx > 0) {
-              console.log(`currentItem: `, myPlayer.playlist.currentItem());
-              console.log(`setting currentItem`, playIdx);
-              myPlayer.playlist.currentItem(playIdx);
-              console.log(`currentItem: `, myPlayer.playlist.currentItem());
-            }
-            if (playTime > 0) {
-              console.log(`currentTime: `, myPlayer.currentTime());
-              console.log(`setting currentTime`, playTime);
-              myPlayer.currentTime(playTime);
-              console.log(`currentTime: `, myPlayer.currentTime());
-            }
+        const myPlayer = videojs.getPlayer('myPlayer')
+        // console.log(videojs)
+        // console.log(myPlayer)
 
-            myPlayer.play();
-          });
+        // listen to playlist loaded event
+        myPlayer.on('loadedmetadata', () => {
+          console.log(`loadedmetadata:`, myPlayer.playlist());
 
-          myPlayer.catalog.getPlaylist(config.playlistId, function (error, playlist) {
+          myPlayer.playlist.autoadvance(0);
+          myPlayer.playlist.playOnSelect = true
+          // const playIdx = parseInt(this.playIdx);
+          // const playTime = parseInt(this.playTime);
+          //
+          // if (playIdx > 0) {
+          //   // console.log(`currentItem: `, myPlayer.playlist.currentItem());
+          //   console.log(`setting currentItem`, playIdx);
+          //   myPlayer.playlist.currentItem(playIdx);
+          //   console.log(`currentItem: `, myPlayer.playlist.currentItem());
+          //
+          //   // loadedmetadata will be fired when the next ep, too.
+          //   // So, we have to avoid setting the idx
+          //   this.playIdx = -1;
+          // }
+          // if (playTime > 0) {
+          //   // console.log(`currentTime: `, myPlayer.currentTime());
+          //   console.log(`setting currentTime`, playTime);
+          //   myPlayer.currentTime(playTime);
+          //   console.log(`currentTime: `, myPlayer.currentTime());
+          //
+          //   // loadedmetadata will be fired when the next ep, too.
+          //   // So, we have to avoid setting the idx
+          //   this.playTime = -1
+          // }
+
+          myPlayer.play();
+        });
+
+        // load playlist
+        myPlayer.ready(() => {
+          // console.log(`setup player`, myPlayer);
+          console.log(`player ready`, cfg.playlistId);
+          // console.log(`myPlayer.playlist`, myPlayer.playlist);
+          console.log(`playIdx, Time`, this.playIdx, this.playTime);
+
+
+          myPlayer?.catalog.getPlaylist(cfg.playlistId, (error, playlist) => {
             if (error) {
               console.error(error);
             } else {
               console.log(playlist);
-              myPlayer.catalog.load(playlist);
+              if (this.playIdx > 0) {
+                const videoId = playlist[this.playIdx].id
+                myPlayer.catalog.autoFindAndLoadMedia({
+                  playlistId: cfg.playlistId,
+                  playlistVideoId: videoId,
+                  startTime: this.playTime || 0,
+                })
+              } else {
+                myPlayer.catalog.load(playlist);
+              }
             }
           });
         })
-      })
+      } catch (error) {
+        console.error(error)
+      }
     }
   }
 }
