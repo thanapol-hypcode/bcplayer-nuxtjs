@@ -88,13 +88,14 @@ export default {
   "playerId": "${this.$config.public.playerId || 'Z4sz5QN9Y'}",
   "playlistId": "1757635339688542008"
 }`,
+      settingJson: undefined,
       playIdx: 1,
       playTime: 15,
     }
   },
   computed: {
     playerConfig: function () {
-      const cfg = JSON.parse(this.setting);
+      const cfg = this.settingJson || JSON.parse(this.setting);
       return {
         "data-account": cfg.accountId,
         "data-player": cfg.playerId,
@@ -108,54 +109,31 @@ export default {
   },
   methods: {
     play() {
-      // this.setupPlayer()
-
       const cfg = JSON.parse(this.setting);
       const playerUrl = `https://players.brightcove.net/${cfg.accountId}/${cfg.playerId}_default/index.min.js`
-      loadScript(playerUrl)
-          .then(() => {
-            return this.setupPlayer();
-          })
-          .catch(console.error);
+      loadScript(playerUrl).then(() => {
+        this.settingJson = cfg;
+        this.$forceUpdate();
+        return this.setupPlayer();
+      }).catch(console.error);
     },
     setupPlayer() {
       try {
         const cfg = JSON.parse(this.setting);
-
         const myPlayer = videojs.getPlayer('myPlayer')
-        // console.log(videojs)
-        // console.log(myPlayer)
 
         // listen to playlist loaded event
         myPlayer.on('loadedmetadata', () => {
           console.log(`loadedmetadata:`, myPlayer.playlist());
 
+          if (this.playTime > 0) {
+            // set only first time
+            myPlayer.currentTime(parseInt(this.playTime));
+            this.playTime = 0;
+          }
+
           myPlayer.playlist.autoadvance(0);
           myPlayer.playlist.playOnSelect = true
-          // const playIdx = parseInt(this.playIdx);
-          // const playTime = parseInt(this.playTime);
-          //
-          // if (playIdx > 0) {
-          //   // console.log(`currentItem: `, myPlayer.playlist.currentItem());
-          //   console.log(`setting currentItem`, playIdx);
-          //   myPlayer.playlist.currentItem(playIdx);
-          //   console.log(`currentItem: `, myPlayer.playlist.currentItem());
-          //
-          //   // loadedmetadata will be fired when the next ep, too.
-          //   // So, we have to avoid setting the idx
-          //   this.playIdx = -1;
-          // }
-          // if (playTime > 0) {
-          //   // console.log(`currentTime: `, myPlayer.currentTime());
-          //   console.log(`setting currentTime`, playTime);
-          //   myPlayer.currentTime(playTime);
-          //   console.log(`currentTime: `, myPlayer.currentTime());
-          //
-          //   // loadedmetadata will be fired when the next ep, too.
-          //   // So, we have to avoid setting the idx
-          //   this.playTime = -1
-          // }
-
           myPlayer.play();
         });
 
@@ -165,7 +143,6 @@ export default {
           console.log(`player ready`, cfg.playlistId);
           // console.log(`myPlayer.playlist`, myPlayer.playlist);
           console.log(`playIdx, Time`, this.playIdx, this.playTime);
-
 
           myPlayer.catalog.getPlaylist(cfg.playlistId, (error, playlist) => {
             if (error) {
