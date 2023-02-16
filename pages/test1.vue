@@ -86,7 +86,10 @@ export default {
       setting: `{
   "accountId": "${this.$config.public.accountId || ''}",
   "playerId": "${this.$config.public.playerId || 'Z4sz5QN9Y'}",
-  "playlistId": "1757635339688542008"
+  "sequence": [6319643115112,6319646968112],
+  "playlistId": "1757635339688542008",
+  "search": "",
+  "policyKey": "${this.$config.public.policyKey || ''}"
 }`,
       settingJson: undefined,
       playIdx: 1,
@@ -95,16 +98,21 @@ export default {
   },
   computed: {
     playerConfig: function () {
-      const cfg = this.settingJson || JSON.parse(this.setting);
-      return {
-        "data-account": cfg.accountId,
-        "data-player": cfg.playerId,
-        "data-embed": "default",
-        "data-application-id": "",
-        "data-start-time": this.playTime,
-        "controls": "",
-        "class": "vjs-fluid"
+      try {
+        const cfg = this.settingJson || JSON.parse(this.setting);
+        return {
+          "data-account": cfg.accountId,
+          "data-player": cfg.playerId,
+          "data-embed": "default",
+          "data-application-id": "",
+          "data-start-time": this.playTime,
+          "controls": "",
+          "class": "vjs-fluid"
+        };
+      } catch (e) {
+        console.error(e);
       }
+      return {};
     }
   },
   methods: {
@@ -144,26 +152,53 @@ export default {
           // console.log(`myPlayer.playlist`, myPlayer.playlist);
           console.log(`playIdx, Time`, this.playIdx, this.playTime);
 
-          myPlayer.catalog.getPlaylist(cfg.playlistId, (error, playlist) => {
-            if (error) {
-              console.error(error);
-            } else {
-              console.log(playlist);
-
-              if (this.playIdx > 0) {
-                // play specific ep
-                const videoId = playlist[this.playIdx].id
-                myPlayer.catalog.autoFindAndLoadMedia({
-                  playlistId: cfg.playlistId,
-                  playlistVideoId: videoId,
-                  // startTime: this.playTime || 0,
-                })
-              } else {
-                myPlayer.catalog.load(playlist);
+          // sequence of video_id, search or playlist_id
+          if (cfg.sequence) {
+            const params = cfg.sequence.map((id) => {
+              return {
+                type: 'video',
+                id: `${id}`
               }
-            }
-          });
-        })
+            });
+            console.log(`sequence`, params);
+            myPlayer.catalog.getSequence(params, (error, videosReturned) => {
+              console.log('videosReturned', videosReturned);
+              myPlayer.playlist(videosReturned);
+            });
+          } else if (cfg.search) {
+            const params = {
+              type: 'search',
+              policyKey: '',
+              q: cfg.search
+            };
+            myPlayer.catalog.getSearch(params, (error, videosReturned) => {
+              console.log('videosReturned', videosReturned);
+              myPlayer.playlist(videosReturned);
+            });
+          } else if (cfg.playlistId) {
+            myPlayer.catalog.getPlaylist(cfg.playlistId, (error, playlist) => {
+              if (error) {
+                console.error(error);
+              } else {
+                console.log(playlist);
+
+                if (this.playIdx > 0) {
+                  // play specific ep
+                  const videoId = playlist[this.playIdx].id
+
+                  myPlayer.catalog.autoFindAndLoadMedia({
+                    playlistId: cfg.playlistId,
+                    playlistVideoId: videoId,
+                    // startTime: this.playTime || 0,
+                  })
+
+                } else {
+                  myPlayer.catalog.load(playlist);
+                }
+              }
+            });
+          }
+        });
       } catch (error) {
         console.error(error)
       }

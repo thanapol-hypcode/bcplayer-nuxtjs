@@ -8,6 +8,7 @@ export default {
     public: {
       accountId: '',
       playerId: '',
+      policyKey: '',
     }
   }
 };
